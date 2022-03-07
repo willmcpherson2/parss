@@ -1,0 +1,6 @@
+conf_layout:
+  lconfig_indentPolicy: IndentPolicyLeft
+  lconfig_indentWhereSpecial: false
+  lconfig_allowSingleLineExportList: true
+  lconfig_columnAlignMode:
+    tag: ColumnAlignModeDisabled

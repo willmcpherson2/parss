@@ -1,0 +1,11 @@
+*
+*/*
+
+!.gitignore
+!LICENSE
+!brittany.yaml
+!parss.cabal
+!src
+!src/**
+!test
+!test/**
