@@ -1,4 +1,4 @@
-module Parser (Parser(..), parse) where
+module Parser (Parser(..)) where
 
 newtype Parser s a = Parser (s -> (s, a))
 
@@ -19,6 +19,3 @@ instance Monad (Parser s) where
       (s', x) = p s
       Parser q = f x
     in q s'
-
-parse :: Parser s a -> s -> a
-parse (Parser p) = snd . p

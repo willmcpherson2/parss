@@ -28,6 +28,7 @@ library
   exposed-modules:
     Parser
     , Combinators
+    , Util
   build-depends:
     base
 

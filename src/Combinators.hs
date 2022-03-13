@@ -7,8 +7,11 @@ module Combinators
   , getPos
   , rest
   , star
+  , getTokenPos
+  , (<||>)
   ) where
 
+import Data.Functor ((<&>))
 import Parser
 
 untake :: Parser s a -> Parser s a
@@ -30,10 +33,11 @@ takeToken = Parser $ \s -> case s of
 getToken :: Parser [t] (Maybe t)
 getToken = untake takeToken
 
+getTokenPos :: Parser [(Int, t)] (Maybe (Int, t))
+getTokenPos = untake takeToken
+
 takePos :: Parser [(Int, t)] (Maybe Int)
-takePos = Parser $ \s -> case s of
-  [] -> (s, Nothing)
-  (pos, _) : ts -> (ts, Just pos)
+takePos = fmap fst <$> takeToken
 
 getPos :: Parser [(Int, t)] (Maybe Int)
 getPos = untake takePos
@@ -45,3 +49,9 @@ star :: Parser s (Maybe a) -> Parser s [a]
 star p = p >>= \case
   Nothing -> pure []
   Just x -> (x :) <$> star p
+
+infixl 1 <||>
+(<||>) :: Parser s (Maybe t) -> (t -> a) -> Parser s (Maybe a)
+p <||> f = p <&> \case
+  Just x -> Just $ f x
+  Nothing -> Nothing
