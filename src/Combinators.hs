@@ -8,10 +8,10 @@ module Combinators
   , rest
   , star
   , getTokenPos
-  , (<||>)
+  , (<<$>>)
+  , (<<&>>)
   ) where
 
-import Data.Functor ((<&>))
 import Parser
 
 untake :: Parser s a -> Parser s a
@@ -50,8 +50,10 @@ star p = p >>= \case
   Nothing -> pure []
   Just x -> (x :) <$> star p
 
-infixl 1 <||>
-(<||>) :: Parser s (Maybe t) -> (t -> a) -> Parser s (Maybe a)
-p <||> f = p <&> \case
-  Just x -> Just $ f x
-  Nothing -> Nothing
+infixl 1 <<$>>
+(<<$>>) :: Functor f => (t -> a) -> Parser s (f t) -> Parser s (f a)
+f <<$>> p = fmap f <$> p
+
+infixl 1 <<&>>
+(<<&>>) :: Functor f => Parser s (f t) -> (t -> a) -> Parser s (f a)
+(<<&>>) = flip (<<$>>)

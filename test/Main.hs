@@ -28,7 +28,7 @@ data Paren = Open | Close | ParenErr
   deriving (Eq, Show)
 
 parseParens :: Parser String [Paren]
-parseParens = star $ takeToken <||> \case
+parseParens = star $ takeToken <<&>> \case
   '(' -> Open
   ')' -> Close
   _ -> ParenErr
@@ -37,7 +37,7 @@ data AB = A Int | B Int | ABErr Int
   deriving (Eq, Show)
 
 parseABs :: Parser [(Int, Char)] [AB]
-parseABs = star $ takeToken <||> \case
+parseABs = star $ takeToken <<&>> \case
   (pos, 'a') -> A pos
   (pos, 'b') -> B pos
   (pos, _) -> ABErr pos
