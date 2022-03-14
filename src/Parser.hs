@@ -3,7 +3,7 @@ module Parser (Parser(..)) where
 import Control.Arrow
 import Control.Category
 
-newtype Parser s a = Parser (s -> (s, a))
+newtype Parser s a = Parser { runParser :: s -> (s, a) }
 
 instance Functor (Parser s) where
   fmap f (Parser p) = Parser $ \s -> let (s', x) = p s in (s', f x)
