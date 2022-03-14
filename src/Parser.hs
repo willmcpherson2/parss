@@ -1,5 +1,8 @@
 module Parser (Parser(..)) where
 
+import Control.Arrow
+import Control.Category
+
 newtype Parser s a = Parser (s -> (s, a))
 
 instance Functor (Parser s) where
@@ -19,3 +22,15 @@ instance Monad (Parser s) where
       (s', x) = p s
       Parser q = f x
     in q s'
+
+instance Category Parser where
+  id = Parser $ \s -> (s, s)
+  Parser p . Parser q = Parser $ \s ->
+    let
+      (_, x) = q s
+      (_, y) = p x
+    in (s, y)
+
+instance Arrow Parser where
+  arr f = Parser $ \s -> let x = f s in (s, x)
+  first (Parser p) = Parser $ \(s, x) -> let (_, y) = p s in ((s, x), (y, x))

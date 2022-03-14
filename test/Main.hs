@@ -1,6 +1,9 @@
 module Main (main) where
 
 import Combinators
+import Control.Monad (void)
+import Data.Char (isAlpha)
+import Data.List.NonEmpty (NonEmpty((:|)))
 import Parser
 import System.Exit
 import Test.HUnit
@@ -13,31 +16,32 @@ main = do
 
 tests :: Test
 tests = TestList
-  [ parse parseParens "" ~?= []
-  , parse parseParens "()" ~?= [Open, Close]
-  , parse parseParens "(())" ~?= [Open, Open, Close, Close]
-  , parse parseParens "(a)" ~?= [Open, ParenErr, Close]
-  , parse parseABs (withPos "") ~?= []
-  , parse parseABs (withPos "a") ~?= [A 0]
-  , parse parseABs (withPos "b") ~?= [B 0]
-  , parse parseABs (withPos "ab") ~?= [A 0, B 1]
-  , parse parseABs (withPos "bab") ~?= [B 0, A 1, B 2]
+  [ parse parseTokens "" ~?= []
+  , parse parseTokens "()" ~?= [Open, Close]
+  , parse parseTokens "(())" ~?= [Open, Open, Close, Close]
+  , parse parseTokens "(a)" ~?= [Open, Name ('a' :| []), Close]
+  , parse parseTokens "foo()" ~?= [Name ('f' :| "oo"), Open, Close]
+  , parse parseTokens "(1)" ~?= [Open, TokenErr, Close]
+  , parse parseTokens " " ~?= []
+  , parse parseTokens " ( foo ) " ~?= [Open, Name ('f' :| "oo"), Close]
+  , parse parseTokens " ( 12 ) " ~?= [Open, TokenErr, TokenErr, Close]
   ]
 
-data Paren = Open | Close | ParenErr
+data Token
+  = Open
+  | Close
+  | Name (NonEmpty Char)
+  | TokenErr
   deriving (Eq, Show)
 
-parseParens :: Parser String [Paren]
-parseParens = star $ takeToken <<&>> \case
-  '(' -> Open
-  ')' -> Close
-  _ -> ParenErr
-
-data AB = A Int | B Int | ABErr Int
-  deriving (Eq, Show)
-
-parseABs :: Parser [(Int, Char)] [AB]
-parseABs = star $ takeToken <<&>> \case
-  (pos, 'a') -> A pos
-  (pos, 'b') -> B pos
-  (pos, _) -> ABErr pos
+parseTokens :: Parser String [Token]
+parseTokens =
+  let
+    skipSpace = void $ star $ try $ match ' '
+    open = Open <<$ try (match '(')
+    close = Close <<$ try (match ')')
+    name = Name <<$>> plus (try $ satisfy isAlpha)
+    err = TokenErr <<$ takeToken
+    token = (open <<|>> close <<|>> name <<|>> err) <* skipSpace
+    tokens = skipSpace *> star token
+  in tokens
