@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module Combinators
   ( untake
   , try
@@ -18,12 +20,16 @@ module Combinators
   , ($>>)
   , plus
   , (|>>)
+  , (<<*>>)
+  , (<*>>)
   ) where
 
+import Control.Applicative (Applicative(liftA2))
 import qualified Control.Category as C
 import Data.Functor ((<&>))
 import Data.List.NonEmpty (NonEmpty, nonEmpty)
 import Parser
+import Stream
 
 getStream :: Parser s s
 getStream = C.id
@@ -39,21 +45,19 @@ try (Parser p) = Parser $ \s ->
       Just x -> (s', Just x)
       Nothing -> (s, Nothing)
 
-takeToken :: Parser [t] (Maybe t)
-takeToken = Parser $ \s -> case s of
-  [] -> (s, Nothing)
-  t : ts -> (ts, Just t)
+takeToken :: Stream s => Parser s (Maybe (T s))
+takeToken = toParser
 
-getToken :: Parser [t] (Maybe t)
+getToken :: Stream s => Parser s (Maybe (T s))
 getToken = untake takeToken
 
 getTokenPos :: Parser [(Int, t)] (Maybe (Int, t))
 getTokenPos = untake takeToken
 
-takePos :: Parser [(Int, t)] (Maybe Int)
-takePos = fmap fst <$> takeToken
+takePos :: PosStream s => Parser s (P s)
+takePos = Parser $ \s -> let p = pos s in (update s, p)
 
-getPos :: Parser [(Int, t)] (Maybe Int)
+getPos :: PosStream s => Parser s (P s)
 getPos = untake takePos
 
 rest :: Parser s a -> Parser s [a]
@@ -67,12 +71,12 @@ star p = p >>= \case
 plus :: Parser s (Maybe a) -> Parser s (Maybe (NonEmpty a))
 plus = fmap nonEmpty . star
 
-satisfy :: (t -> Bool) -> Parser [t] (Maybe t)
+satisfy :: Stream s => (T s -> Bool) -> Parser s (Maybe (T s))
 satisfy f = takeToken <&> \case
   Just x -> if f x then Just x else Nothing
   Nothing -> Nothing
 
-match :: Eq t => t -> Parser [t] (Maybe t)
+match :: (Stream s, Eq (T s)) => T s -> Parser s (Maybe (T s))
 match x = satisfy (== x)
 
 infixl 3 <<|>>
@@ -89,17 +93,26 @@ p |>> q = p >>= \case
   Nothing -> q
 
 infixl 4 <<$>>
-(<<$>>) :: Functor f => (t -> a) -> Parser s (f t) -> Parser s (f a)
-f <<$>> p = fmap f <$> p
+(<<$>>) :: (Functor f, Functor g) => (t -> a) -> f (g t) -> f (g a)
+(<<$>>) = fmap . fmap
 
 infixl 4 <<$
-(<<$) :: Functor f => a -> Parser s (f t) -> Parser s (f a)
+(<<$) :: (Functor f, Functor g) => a -> f (g t) -> f (g a)
 x <<$ p = const x <<$>> p
 
 infixl 4 $>>
-($>>) :: Functor f => Parser s (f t) -> a -> Parser s (f a)
+($>>) :: (Functor f, Functor g) => f (g t) -> a -> f (g a)
 ($>>) = flip (<<$)
 
 infixl 1 <<&>>
-(<<&>>) :: Functor f => Parser s (f t) -> (t -> a) -> Parser s (f a)
+(<<&>>) :: (Functor f, Functor g) => f (g t) -> (t -> a) -> f (g a)
 (<<&>>) = flip (<<$>>)
+
+infixl 4 <<*>>
+(<<*>>)
+  :: (Applicative f, Applicative g) => f (g (a -> b)) -> f (g a) -> f (g b)
+(<<*>>) = liftA2 (<*>)
+
+infixl 4 <*>>
+(<*>>) :: (Applicative f, Applicative g) => f (a -> b) -> f (g a) -> f (g b)
+x <*>> y = pure <$> x <<*>> y

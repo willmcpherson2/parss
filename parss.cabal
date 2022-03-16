@@ -27,6 +27,7 @@ library
   hs-source-dirs: src
   exposed-modules:
     Parser
+    , Stream
     , Combinators
     , Util
   build-depends:
@@ -35,9 +36,13 @@ library
 test-suite test
   import: shared
   hs-source-dirs: test
+  other-modules:
+    Harness
+    , Token
   type: exitcode-stdio-1.0
   main-is: Main.hs
   build-depends:
     base
     , parss
     , HUnit
+    , transformers
