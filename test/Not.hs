@@ -1,6 +1,9 @@
-module Token (tokenTests) where
+{-# LANGUAGE TypeFamilies #-}
+
+module Not (tokenTests, treeTests, exprTests) where
 
 import Combinators
+import Control.Arrow ((<<<))
 import Control.Monad (void)
 import Control.Monad.Trans.Class (MonadTrans(lift))
 import Control.Monad.Trans.Maybe (MaybeT(MaybeT, runMaybeT))
@@ -8,7 +11,82 @@ import Data.Char (isAlpha)
 import Data.List.NonEmpty (NonEmpty((:|)))
 import Harness (tests)
 import Parser
+import Stream
 import Test.HUnit (Test)
+import Util (parse)
+
+exprTests :: Test
+exprTests = tests
+  (\s -> parse (parseTree <<< parseTokens) (0, s))
+  [("parseExpr", parseExpr)]
+  [ ("", ExprErr (Just (TreeErr Nothing)))
+  , ("true", T 0)
+  , ("false", F 0)
+  , ("(not true)", Not 0 (T 5))
+  , ("(not (not false))", Not 0 (Not 5 (F 10)))
+  ]
+
+data Expr
+  = T Int
+  | F Int
+  | Not Int Expr
+  | ExprErr (Maybe Tree)
+  deriving (Eq, Show)
+
+parseExpr :: Parser Tree Expr
+parseExpr =
+  let
+    t = runMaybeT $ do
+      Leaf pos ('t' :| "rue") <- MaybeT takeToken
+      pure $ T pos
+    f = runMaybeT $ do
+      Leaf pos ('f' :| "alse") <- MaybeT takeToken
+      pure $ F pos
+    n = runMaybeT $ do
+      Branch pos (Leaf _ ('n' :| "ot")) r <- MaybeT takeToken
+      let r' = parse parseExpr r
+      pure $ Not pos r'
+    err = ExprErr <$> takeToken
+  in t <<|>> f <<|>> n |>> err
+
+treeTests :: Test
+treeTests = tests
+  (\s -> parse parseTokens (0, s))
+  [("parseTree", parseTree)]
+  [ ("", TreeErr Nothing)
+  , (" ", TreeErr Nothing)
+  , ("x", Leaf 0 ('x' :| []))
+  , ("1", TreeErr (Just (TokenErr 0)))
+  , (" x ", Leaf 1 ('x' :| []))
+  , ("(f x)", Branch 0 (Leaf 1 ('f' :| [])) (Leaf 3 ('x' :| [])))
+  , ("(f 1)", Branch 0 (Leaf 1 ('f' :| [])) (TreeErr (Just (TokenErr 3))))
+  , (" ( f x ) ", Branch 1 (Leaf 3 ('f' :| [])) (Leaf 5 ('x' :| [])))
+  ]
+
+data Tree
+  = Branch Int Tree Tree
+  | Leaf Int (NonEmpty Char)
+  | TreeErr (Maybe Token)
+  deriving (Eq, Show)
+
+instance Stream Tree where
+  type T Tree = Tree
+  token = Just
+
+parseTree :: Parser [Token] Tree
+parseTree =
+  let
+    leaf = runMaybeT $ do
+      Name pos s <- MaybeT takeToken
+      pure $ Leaf pos s
+    branch = runMaybeT $ do
+      Open pos <- MaybeT takeToken
+      l <- lift parseTree
+      r <- lift parseTree
+      Close _ <- MaybeT takeToken
+      pure $ Branch pos l r
+    err = TreeErr <$> takeToken
+  in leaf <<|>> branch |>> err
 
 tokenTests :: Test
 tokenTests = tests

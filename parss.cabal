@@ -38,7 +38,7 @@ test-suite test
   hs-source-dirs: test
   other-modules:
     Harness
-    , Token
+    , Not
   type: exitcode-stdio-1.0
   main-is: Main.hs
   build-depends:
