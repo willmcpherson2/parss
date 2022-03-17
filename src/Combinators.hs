@@ -7,9 +7,7 @@ module Combinators
   , getToken
   , takePos
   , getPos
-  , rest
   , star
-  , getTokenPos
   , (<<$>>)
   , (<<&>>)
   , getStream
@@ -24,7 +22,7 @@ module Combinators
   , (<*>>)
   ) where
 
-import Control.Applicative (Applicative(liftA2))
+import Control.Applicative (Alternative(empty), Applicative(liftA2))
 import qualified Control.Category as C
 import Data.Functor ((<&>))
 import Data.List.NonEmpty (NonEmpty, nonEmpty)
@@ -51,17 +49,11 @@ takeToken = toParser
 getToken :: Stream s => Parser s (Maybe (T s))
 getToken = untake takeToken
 
-getTokenPos :: Parser [(Int, t)] (Maybe (Int, t))
-getTokenPos = untake takeToken
-
 takePos :: PosStream s => Parser s (P s)
 takePos = Parser $ \s -> let p = pos s in (update s, p)
 
 getPos :: PosStream s => Parser s (P s)
 getPos = untake takePos
-
-rest :: Parser s a -> Parser s [a]
-rest p = (:) <$> p <*> rest p
 
 star :: Parser s (Maybe a) -> Parser s [a]
 star p = p >>= \case
@@ -71,10 +63,10 @@ star p = p >>= \case
 plus :: Parser s (Maybe a) -> Parser s (Maybe (NonEmpty a))
 plus = fmap nonEmpty . star
 
-satisfy :: Stream s => (T s -> Bool) -> Parser s (Maybe (T s))
+satisfy :: (Stream s, Alternative f) => (T s -> Bool) -> Parser s (f (T s))
 satisfy f = takeToken <&> \case
-  Just x -> if f x then Just x else Nothing
-  Nothing -> Nothing
+  Just x -> if f x then pure x else empty
+  Nothing -> empty
 
 match :: (Stream s, Eq (T s)) => T s -> Parser s (Maybe (T s))
 match x = satisfy (== x)

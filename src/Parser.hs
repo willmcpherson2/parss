@@ -1,5 +1,6 @@
 module Parser (Parser(..)) where
 
+import Control.Applicative (Applicative(liftA2))
 import Control.Arrow
 import Control.Category
 
@@ -34,3 +35,9 @@ instance Category Parser where
 instance Arrow Parser where
   arr f = Parser $ \s -> let x = f s in (s, x)
   first (Parser p) = Parser $ \(s, x) -> let (_, y) = p s in ((s, x), (y, x))
+
+instance Semigroup a => Semigroup (Parser s a) where
+  (<>) = liftA2 (<>)
+
+instance Monoid a => Monoid (Parser s a) where
+  mempty = pure mempty
