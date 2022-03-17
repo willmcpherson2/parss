@@ -1,5 +1,3 @@
-{-# LANGUAGE TypeFamilies #-}
-
 module Not (tokenTests, treeTests, exprTests) where
 
 import Combinators
@@ -11,7 +9,6 @@ import Data.Char (isAlpha)
 import Data.List.NonEmpty (NonEmpty((:|)))
 import Harness (tests)
 import Parser
-import Stream
 import Test.HUnit (Test)
 import Util (parse)
 
@@ -19,7 +16,7 @@ exprTests :: Test
 exprTests = tests
   (\s -> parse (parseTree <<< parseTokens) (0, s))
   [("parseExpr", parseExpr)]
-  [ ("", ExprErr (Just (TreeErr Nothing)))
+  [ ("", ExprErr (TreeErr Nothing))
   , ("true", T 0)
   , ("false", F 0)
   , ("(not true)", Not 0 (T 5))
@@ -30,23 +27,23 @@ data Expr
   = T Int
   | F Int
   | Not Int Expr
-  | ExprErr (Maybe Tree)
+  | ExprErr Tree
   deriving (Eq, Show)
 
 parseExpr :: Parser Tree Expr
 parseExpr =
   let
     t = runMaybeT $ do
-      Leaf pos ('t' :| "rue") <- MaybeT takeToken
+      Leaf pos ('t' :| "rue") <- lift getStream
       pure $ T pos
     f = runMaybeT $ do
-      Leaf pos ('f' :| "alse") <- MaybeT takeToken
+      Leaf pos ('f' :| "alse") <- lift getStream
       pure $ F pos
     n = runMaybeT $ do
-      Branch pos (Leaf _ ('n' :| "ot")) r <- MaybeT takeToken
+      Branch pos (Leaf _ ('n' :| "ot")) r <- lift getStream
       let r' = parse parseExpr r
       pure $ Not pos r'
-    err = ExprErr <$> takeToken
+    err = ExprErr <$> getStream
   in t <<|>> f <<|>> n |>> err
 
 treeTests :: Test
@@ -68,10 +65,6 @@ data Tree
   | Leaf Int (NonEmpty Char)
   | TreeErr (Maybe Token)
   deriving (Eq, Show)
-
-instance Stream Tree where
-  type T Tree = Tree
-  token = Just
 
 parseTree :: Parser [Token] Tree
 parseTree =

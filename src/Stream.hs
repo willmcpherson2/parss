@@ -1,14 +1,19 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DefaultSignatures #-}
 
 module Stream (Stream(..), PosStream(..)) where
 
+import Data.Kind (Type)
 import Parser (Parser(Parser))
 
 class Stream s where
-  type T s
+  type T s :: Type
+  type T s = s
 
   token :: s -> Maybe (T s)
+  default token :: T s ~ s => s -> Maybe (T s)
+  token = Just
 
   state :: s -> s
   state = id
