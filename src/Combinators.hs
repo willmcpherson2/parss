@@ -43,16 +43,16 @@ try (Parser p) = Parser $ \s ->
       Just x -> (s', Just x)
       Nothing -> (s, Nothing)
 
-takeToken :: Stream s => Parser s (Maybe (T s))
+takeToken :: Stream s t => Parser s (Maybe t)
 takeToken = toParser
 
-getToken :: Stream s => Parser s (Maybe (T s))
+getToken :: Stream s t => Parser s (Maybe t)
 getToken = untake takeToken
 
-takePos :: PosStream s => Parser s (P s)
+takePos :: PosStream s t p => Parser s p
 takePos = Parser $ \s -> let p = pos s in (update s, p)
 
-getPos :: PosStream s => Parser s (P s)
+getPos :: PosStream s t p => Parser s p
 getPos = untake takePos
 
 star :: Parser s (Maybe a) -> Parser s [a]
@@ -63,12 +63,12 @@ star p = p >>= \case
 plus :: Parser s (Maybe a) -> Parser s (Maybe (NonEmpty a))
 plus = fmap nonEmpty . star
 
-satisfy :: (Stream s, Alternative f) => (T s -> Bool) -> Parser s (f (T s))
+satisfy :: (Stream s t, Alternative f) => (t -> Bool) -> Parser s (f t)
 satisfy f = takeToken <&> \case
   Just x -> if f x then pure x else empty
   Nothing -> empty
 
-match :: (Stream s, Eq (T s), Alternative f) => T s -> Parser s (f (T s))
+match :: (Stream s t, Eq t, Alternative f) => t -> Parser s (f t)
 match x = satisfy (== x)
 
 infixl 3 <<|>>
