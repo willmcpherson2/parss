@@ -68,7 +68,7 @@ satisfy f = takeToken <&> \case
   Just x -> if f x then pure x else empty
   Nothing -> empty
 
-match :: (Stream s, Eq (T s)) => T s -> Parser s (Maybe (T s))
+match :: (Stream s, Eq (T s), Alternative f) => T s -> Parser s (f (T s))
 match x = satisfy (== x)
 
 infixl 3 <<|>>
