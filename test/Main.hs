@@ -1,5 +1,6 @@
 module Main (main) where
 
+import qualified Abc
 import qualified Balanced
 import qualified Not
 import System.Exit
@@ -13,5 +14,6 @@ main = do
     , Not.exprTests
     , Balanced.tokenTests
     , Balanced.parensTests
+    , Abc.abcTests
     ]
   if errors counts + failures counts == 0 then exitSuccess else exitFailure

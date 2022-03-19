@@ -8,21 +8,17 @@ module Combinators
   , takePos
   , getPos
   , star
-  , (<<$>>)
-  , (<<&>>)
   , getStream
   , (<<|>>)
   , match
   , satisfy
-  , (<<$)
-  , ($>>)
   , plus
   , (|>>)
-  , (<<*>>)
-  , (<*>>)
+  , (!>>)
+  , eof
   ) where
 
-import Control.Applicative (Alternative(empty), Applicative(liftA2))
+import Control.Applicative (Alternative(empty))
 import qualified Control.Category as C
 import Data.Functor ((<&>))
 import Data.List.NonEmpty (NonEmpty, nonEmpty)
@@ -71,12 +67,18 @@ satisfy f = takeToken <&> \case
 match :: (Stream s t, Eq t, Alternative f) => t -> Parser s (f t)
 match x = satisfy (== x)
 
+eof :: Alternative f => Stream s t => Parser s (f ())
+eof = getToken <&> \case
+  Just _ -> empty
+  Nothing -> pure ()
+
 infixl 3 <<|>>
-(<<|>>) :: Parser s (Maybe a) -> Parser s (Maybe a) -> Parser s (Maybe a)
+(<<|>>)
+  :: Alternative f => Parser s (Maybe a) -> Parser s (Maybe a) -> Parser s (f a)
 (Parser p) <<|>> (Parser q) = Parser $ \s -> case (p s, q s) of
-  ((s', Just x), _) -> (s', Just x)
-  (_, (s', Just x)) -> (s', Just x)
-  _ -> (s, Nothing)
+  ((s', Just x), _) -> (s', pure x)
+  (_, (s', Just x)) -> (s', pure x)
+  _ -> (s, empty)
 
 infixl 0 |>>
 (|>>) :: Parser s (Maybe a) -> Parser s a -> Parser s a
@@ -84,27 +86,8 @@ p |>> q = p >>= \case
   Just x -> pure x
   Nothing -> q
 
-infixl 4 <<$>>
-(<<$>>) :: (Functor f, Functor g) => (t -> a) -> f (g t) -> f (g a)
-(<<$>>) = fmap . fmap
-
-infixl 4 <<$
-(<<$) :: (Functor f, Functor g) => a -> f (g t) -> f (g a)
-x <<$ p = const x <<$>> p
-
-infixl 4 $>>
-($>>) :: (Functor f, Functor g) => f (g t) -> a -> f (g a)
-($>>) = flip (<<$)
-
-infixl 1 <<&>>
-(<<&>>) :: (Functor f, Functor g) => f (g t) -> (t -> a) -> f (g a)
-(<<&>>) = flip (<<$>>)
-
-infixl 4 <<*>>
-(<<*>>)
-  :: (Applicative f, Applicative g) => f (g (a -> b)) -> f (g a) -> f (g b)
-(<<*>>) = liftA2 (<*>)
-
-infixl 4 <*>>
-(<*>>) :: (Applicative f, Applicative g) => f (a -> b) -> f (g a) -> f (g b)
-x <*>> y = pure <$> x <<*>> y
+infixl 3 !>>
+(!>>) :: Parser s (Maybe b) -> a -> Parser s (Either a b)
+p !>> e = p <&> \case
+  Just x -> Right x
+  Nothing -> Left e

@@ -84,7 +84,7 @@ parseTree =
 tokenTests :: Test
 tokenTests = tests
   (0, )
-  [("parseTokens", parseTokens), ("parseTokensM", parseTokensM)]
+  [("parseTokens", parseTokens)]
   [ ("", [])
   , ("()", [Open 0, Close 1])
   , ("(())", [Open 0, Open 1, Close 2, Close 3])
@@ -105,18 +105,6 @@ data Token
 
 parseTokens :: Parser (Int, String) [Token]
 parseTokens =
-  let
-    skipSpace = void $ star $ try $ match ' '
-    open = getPos >>= \pos -> try (match '(') $>> Open pos
-    close = getPos >>= \pos -> try (match ')') $>> Close pos
-    name = Name <$> getPos <*>> plus (try $ satisfy isAlpha)
-    err = getPos >>= \pos -> TokenErr pos <<$ takeToken
-    token = (open <<|>> close <<|>> name <<|>> err) <* skipSpace
-    tokens = skipSpace *> star token
-  in tokens
-
-parseTokensM :: Parser (Int, String) [Token]
-parseTokensM =
   let
     skipSpace = void $ star $ try $ match ' '
     open = runMaybeT $ do
