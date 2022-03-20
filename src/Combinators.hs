@@ -16,9 +16,12 @@ module Combinators
   , (|>>)
   , (!>>)
   , eof
+  , (<<!)
+  , (<<|)
+  , upto
   ) where
 
-import Control.Applicative (Alternative(empty))
+import Control.Applicative (Alternative(empty), Applicative(liftA2))
 import qualified Control.Category as C
 import Data.Functor ((<&>))
 import Data.List.NonEmpty (NonEmpty, nonEmpty)
@@ -59,6 +62,11 @@ star p = p >>= \case
 plus :: Parser s (Maybe a) -> Parser s (Maybe (NonEmpty a))
 plus = fmap nonEmpty . star
 
+upto :: Parser s a -> Parser s (Maybe ()) -> Parser s [a]
+upto p q = q >>= \case
+  Just{} -> pure []
+  Nothing -> liftA2 (:) p (upto p q)
+
 satisfy :: (Stream s t, Alternative f) => (t -> Bool) -> Parser s (f t)
 satisfy f = takeToken <&> \case
   Just x -> if f x then pure x else empty
@@ -86,8 +94,16 @@ p |>> q = p >>= \case
   Just x -> pure x
   Nothing -> q
 
+infixl 0 <<|
+(<<|) :: Parser s a -> Parser s (Maybe a) -> Parser s a
+(<<|) = flip (|>>)
+
 infixl 3 !>>
 (!>>) :: Parser s (Maybe b) -> a -> Parser s (Either a b)
 p !>> e = p <&> \case
   Just x -> Right x
   Nothing -> Left e
+
+infixl 3 <<!
+(<<!) :: a -> Parser s (Maybe b) -> Parser s (Either a b)
+(<<!) = flip (!>>)
