@@ -1,16 +1,11 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-
 module Lisp (exprTests, tokenTests, treeTests) where
 
 import Combinators
-import Control.Arrow ((<<<))
+import Control.Arrow ((<<<), Arrow(arr))
 import Control.Monad (void)
 import Control.Monad.Trans.Class (MonadTrans(lift))
 import Control.Monad.Trans.Maybe (MaybeT(MaybeT, runMaybeT))
 import Data.Char (isAlpha, isSpace)
-import Data.Either.Combinators (maybeToRight)
-import Data.Either.Extra (fromEither)
 import Data.List.NonEmpty (NonEmpty((:|)))
 import Harness (tests)
 import Parser
@@ -57,35 +52,23 @@ data Expr
   deriving (Show, Eq)
 
 parseExpr :: Parser Tree Expr
-parseExpr =
-  let
-    var = runMaybeT $ do
-      Leaf pos s <- lift getStream
-      pure $ Var pos s
-    param = runMaybeT $ do
-      Leaf _ s <- lift getStream
-      pure s
-    fun = runMaybeT $ do
-      s <- lift getStream
-      Branch pos (Leaf _ ('l' :| "ambda") : trees) <- pure s
-      pure $ fromEither $ do
-        (params, body) <- maybeToRight (ExprErr $ FunErr s) $ do
-          [Branch _ params, body] <- pure trees
-          pure (params, body)
-        params' <- maybeToRight
-          (ExprErr (ParamErr s))
-          (mapM (parse param) params)
-        let body' = parse parseExpr body
-        pure $ Fun pos params' body'
-    app = runMaybeT $ do
-      Branch pos trees <- lift getStream
-      let exprs = map (parse parseExpr) trees
-      pure $ App pos exprs
-    treeErr = runMaybeT $ do
-      TreeErr err <- lift getStream
-      pure $ ExprErr err
-    err = ExprErr . SyntaxErr <$> getStream
-  in try var <<|>> try fun <<|>> try app <<|>> try treeErr |>> err
+parseExpr = arr $ \case
+  Leaf pos s -> Var pos s
+  s@(Branch pos trees) -> case trees of
+    Leaf _ ('l' :| "ambda") : trees -> case trees of
+      [Branch _ params, body] ->
+        let
+          parseParam = \case
+            Leaf _ s -> Just s
+            _ -> Nothing
+          params' = mapM parseParam params
+          body' = parse parseExpr body
+        in case params' of
+          Just params' -> Fun pos params' body'
+          Nothing -> ExprErr $ ParamErr s
+      _ -> ExprErr $ FunErr s
+    trees -> App pos $ map (parse parseExpr) trees
+  TreeErr err -> ExprErr err
 
 --------------------------------------------------------------------------------
 

@@ -48,5 +48,3 @@ test-suite test
     , parss
     , HUnit
     , transformers
-    , either
-    , extra
