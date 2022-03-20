@@ -57,10 +57,10 @@ parseTokens :: Parser String [Token]
 parseTokens =
   let
     open = runMaybeT $ do
-      MaybeT $ try $ match '('
+      MaybeT $ try $ matchM '('
       pure Open
     close = runMaybeT $ do
-      MaybeT $ try $ match ')'
+      MaybeT $ try $ matchM ')'
       pure Close
     err = runMaybeT $ do
       MaybeT takeToken

@@ -40,8 +40,8 @@ parseAbc = parseErr <&> \case
 
 parseErr :: Parser String (Either Err Abc)
 parseErr = runExceptT $ do
-  ExceptT $ match 'a' !>> ExpectedA
-  ExceptT $ match 'b' !>> ExpectedB
-  ExceptT $ match 'c' !>> ExpectedC
-  ExceptT $ eof !>> ExpectedEof
+  ExceptT $ matchM 'a' !>> ExpectedA
+  ExceptT $ matchM 'b' !>> ExpectedB
+  ExceptT $ matchM 'c' !>> ExpectedC
+  ExceptT $ match Nothing !>> ExpectedEof
   pure Abc

@@ -8,9 +8,9 @@ module Stream (Stream(..), PosStream(..)) where
 import Parser (Parser(Parser))
 
 class Stream s t | s -> t where
-  token :: s -> Maybe t
-  default token :: t ~ s => s -> Maybe t
-  token = Just
+  token :: s -> t
+  default token :: t ~ s => s -> t
+  token = id
 
   state :: s -> s
   state = id
@@ -18,7 +18,7 @@ class Stream s t | s -> t where
   update :: s -> s
   update = id
 
-  toParser :: Parser s (Maybe t)
+  toParser :: Parser s t
   toParser = Parser $ \s -> let t = token s in (update s, t)
 
 class Stream s t => PosStream s t p | s -> p where
@@ -26,7 +26,7 @@ class Stream s t => PosStream s t p | s -> p where
   default pos :: s ~ (p, a) => s -> p
   pos = fst
 
-instance Stream [a] a where
+instance Stream [a] (Maybe a) where
   token = \case
     [] -> Nothing
     t : _ -> Just t
@@ -34,10 +34,10 @@ instance Stream [a] a where
     [] -> []
     _ : ts -> ts
 
-instance Enum p => Stream (p, [a]) a where
+instance Enum p => Stream (p, [a]) (Maybe a) where
   token = token . snd
   update (pos, s) = case s of
     [] -> (pos, [])
     _ : ts -> (succ pos, ts)
 
-instance Enum p => PosStream (p, [a]) a p where
+instance Enum p => PosStream (p, [a]) (Maybe a) p where

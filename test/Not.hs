@@ -106,18 +106,18 @@ data Token
 parseTokens :: Parser (Int, String) [Token]
 parseTokens =
   let
-    skipSpace = void $ star $ try $ match ' '
+    skipSpace = void $ star $ try $ matchM ' '
     open = runMaybeT $ do
       pos <- lift getPos
-      MaybeT $ try $ match '('
+      MaybeT $ try $ matchM '('
       pure $ Open pos
     close = runMaybeT $ do
       pos <- lift getPos
-      MaybeT $ try $ match ')'
+      MaybeT $ try $ matchM ')'
       pure $ Close pos
     name = runMaybeT $ do
       pos <- lift getPos
-      s <- MaybeT $ plus $ try $ satisfy isAlpha
+      s <- MaybeT $ plus $ try $ satisfyM isAlpha
       pure $ Name pos s
     err = runMaybeT $ do
       pos <- lift getPos

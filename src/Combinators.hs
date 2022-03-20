@@ -15,10 +15,13 @@ module Combinators
   , plus
   , (|>>)
   , (!>>)
-  , eof
   , (<<!)
   , (<<|)
   , upto
+  , into
+  , intoM
+  , satisfyM
+  , matchM
   ) where
 
 import Control.Applicative (Alternative(empty), Applicative(liftA2))
@@ -42,10 +45,10 @@ try (Parser p) = Parser $ \s ->
       Just x -> (s', Just x)
       Nothing -> (s, Nothing)
 
-takeToken :: Stream s t => Parser s (Maybe t)
+takeToken :: Stream s t => Parser s t
 takeToken = toParser
 
-getToken :: Stream s t => Parser s (Maybe t)
+getToken :: Stream s t => Parser s t
 getToken = untake takeToken
 
 takePos :: PosStream s t p => Parser s p
@@ -67,18 +70,24 @@ upto p q = q >>= \case
   Just{} -> pure []
   Nothing -> liftA2 (:) p (upto p q)
 
+into :: Stream s t => (t -> a) -> Parser s a
+into f = f <$> takeToken
+
+intoM :: (Monad m, Stream s (m t)) => (t -> m a) -> Parser s (m a)
+intoM f = into $ \x -> x >>= f
+
 satisfy :: (Stream s t, Alternative f) => (t -> Bool) -> Parser s (f t)
-satisfy f = takeToken <&> \case
-  Just x -> if f x then pure x else empty
-  Nothing -> empty
+satisfy f = into $ \t -> if f t then pure t else empty
+
+satisfyM
+  :: (Monad m, Alternative m, Stream s (m a)) => (a -> Bool) -> Parser s (m a)
+satisfyM f = intoM $ \t -> if f t then pure t else empty
 
 match :: (Stream s t, Eq t, Alternative f) => t -> Parser s (f t)
 match x = satisfy (== x)
 
-eof :: Alternative f => Stream s t => Parser s (f ())
-eof = getToken <&> \case
-  Just _ -> empty
-  Nothing -> pure ()
+matchM :: (Monad m, Alternative m, Stream s (m a), Eq a) => a -> Parser s (m a)
+matchM x = satisfyM (== x)
 
 infixl 3 <<|>>
 (<<|>>)
