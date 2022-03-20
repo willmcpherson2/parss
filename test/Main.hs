@@ -16,8 +16,8 @@ main = do
     , Balanced.tokenTests
     , Balanced.parensTests
     , Abc.abcTests
-    , Lisp.exprTests
     , Lisp.tokenTests
     , Lisp.treeTests
+    , Lisp.exprTests
     ]
   if errors counts + failures counts == 0 then exitSuccess else exitFailure

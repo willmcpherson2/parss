@@ -42,6 +42,12 @@ exprTests = tests
         )
       )
     )
+  , ( "(lambda (x))"
+    , ExprErr $ FunErr $ Branch
+      0
+      [Leaf 1 ('l' :| "ambda"), Branch 8 [Leaf 9 ('x' :| "")]]
+    )
+  , ("(lambda)", ExprErr $ FunErr $ Branch 0 [Leaf 1 ('l' :| "ambda")])
   ]
 
 data Expr
@@ -62,8 +68,11 @@ parseExpr =
       pure s
     fun = runMaybeT $ do
       s <- lift getStream
-      Branch pos [Leaf _ ('l' :| "ambda"), Branch _ params, body] <- pure s
+      Branch pos (Leaf _ ('l' :| "ambda") : trees) <- pure s
       pure $ fromEither $ do
+        (params, body) <- maybeToRight (ExprErr $ FunErr s) $ do
+          [Branch _ params, body] <- pure trees
+          pure (params, body)
         params' <- maybeToRight
           (ExprErr (ParamErr s))
           (mapM (parse param) params)
@@ -192,5 +201,7 @@ data Err
   | UnexpectedEof
   | ExpectedEof Token
   | SyntaxErr Tree
+  | FunErr Tree
   | ParamErr Tree
+  | BodyErr Tree
   deriving (Show, Eq)
