@@ -29,7 +29,6 @@ library
     Parser
     , Stream
     , Combinators
-    , Util
   build-depends:
     base
 

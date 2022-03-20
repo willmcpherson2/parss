@@ -1,9 +1,8 @@
 module Harness (tests) where
 
-import Parser (Parser)
+import Parser
 import Test.HUnit
   (AssertionPredicable(assertionPredicate), Test(TestList), (~?))
-import Util (parse)
 
 tests
   :: (Eq a, Show a, Show s)

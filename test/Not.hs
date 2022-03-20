@@ -10,7 +10,6 @@ import Data.List.NonEmpty (NonEmpty((:|)))
 import Harness (tests)
 import Parser
 import Test.HUnit (Test)
-import Util (parse)
 
 exprTests :: Test
 exprTests = tests

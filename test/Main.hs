@@ -2,8 +2,8 @@ module Main (main) where
 
 import qualified Abc
 import qualified Balanced
-import qualified Not
 import qualified Lisp
+import qualified Not
 import System.Exit
 import Test.HUnit (Counts(errors, failures), Test(TestList), runTestTT)
 

@@ -6,7 +6,6 @@ import Control.Monad.Trans.Maybe (MaybeT(MaybeT, runMaybeT))
 import Harness
 import Parser
 import Test.HUnit (Test)
-import Util (parse)
 
 parensTests :: Test
 parensTests = tests

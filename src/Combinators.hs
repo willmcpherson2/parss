@@ -1,11 +1,8 @@
-{-# LANGUAGE FlexibleContexts #-}
-
 module Combinators
   ( untake
   , try
   , takeToken
   , getToken
-  , takePos
   , getPos
   , star
   , getStream
@@ -51,11 +48,8 @@ takeToken = toParser
 getToken :: Stream s t => Parser s t
 getToken = untake takeToken
 
-takePos :: PosStream s t p => Parser s p
-takePos = Parser $ \s -> let p = pos s in (update s, p)
-
 getPos :: PosStream s t p => Parser s p
-getPos = untake takePos
+getPos = Parser $ \s -> let p = pos s in (s, p)
 
 star :: Parser s (Maybe a) -> Parser s [a]
 star p = p >>= \case

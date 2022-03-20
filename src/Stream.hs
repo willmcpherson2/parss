@@ -5,21 +5,13 @@
 
 module Stream (Stream(..), PosStream(..)) where
 
+import qualified Control.Category as C
 import Parser (Parser(Parser))
 
 class Stream s t | s -> t where
-  token :: s -> t
-  default token :: t ~ s => s -> t
-  token = id
-
-  state :: s -> s
-  state = id
-
-  update :: s -> s
-  update = id
-
   toParser :: Parser s t
-  toParser = Parser $ \s -> let t = token s in (update s, t)
+  default toParser :: t ~ s => Parser s t
+  toParser = C.id
 
 class Stream s t => PosStream s t p | s -> p where
   pos :: s -> p
@@ -27,17 +19,13 @@ class Stream s t => PosStream s t p | s -> p where
   pos = fst
 
 instance Stream [a] (Maybe a) where
-  token = \case
-    [] -> Nothing
-    t : _ -> Just t
-  update = \case
-    [] -> []
-    _ : ts -> ts
+  toParser = Parser $ \case
+    [] -> ([], Nothing)
+    t : ts -> (ts, Just t)
 
 instance Enum p => Stream (p, [a]) (Maybe a) where
-  token = token . snd
-  update (pos, s) = case s of
-    [] -> (pos, [])
-    _ : ts -> (succ pos, ts)
+  toParser = Parser $ \case
+    (pos, []) -> ((pos, []), Nothing)
+    (pos, t : ts) -> ((succ pos, ts), Just t)
 
 instance Enum p => PosStream (p, [a]) (Maybe a) p where

@@ -1,8 +1,9 @@
-module Parser (Parser(..)) where
+module Parser (Parser(..), parse) where
 
 import Control.Applicative (Applicative(liftA2))
 import Control.Arrow
-import Control.Category
+import qualified Control.Category (Category((.), id))
+import Control.Category (Category)
 
 newtype Parser s a = Parser { runParser :: s -> (s, a) }
 
@@ -41,3 +42,6 @@ instance Semigroup a => Semigroup (Parser s a) where
 
 instance Monoid a => Monoid (Parser s a) where
   mempty = pure mempty
+
+parse :: Parser s a -> s -> a
+parse (Parser p) = snd . p
