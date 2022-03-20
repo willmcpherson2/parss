@@ -1,7 +1,7 @@
 module Not (tokenTests, treeTests, exprTests) where
 
 import Combinators
-import Control.Arrow ((<<<))
+import Control.Arrow ((<<<), Arrow(arr))
 import Control.Monad (void)
 import Control.Monad.Trans.Class (MonadTrans(lift))
 import Control.Monad.Trans.Maybe (MaybeT(MaybeT, runMaybeT))
@@ -30,20 +30,15 @@ data Expr
   deriving (Eq, Show)
 
 parseExpr :: Parser Tree Expr
-parseExpr =
-  let
-    t = runMaybeT $ do
-      Leaf pos ('t' :| "rue") <- lift getStream
-      pure $ T pos
-    f = runMaybeT $ do
-      Leaf pos ('f' :| "alse") <- lift getStream
-      pure $ F pos
-    n = runMaybeT $ do
-      Branch pos (Leaf _ ('n' :| "ot")) r <- lift getStream
-      let r' = parse parseExpr r
-      pure $ Not pos r'
-    err = ExprErr <$> getStream
-  in t <<|>> f <<|>> n |>> err
+parseExpr = arr $ \tree -> case tree of
+  TreeErr{} -> ExprErr tree
+  Leaf pos s -> case s of
+    't' :| "rue" -> T pos
+    'f' :| "alse" -> F pos
+    _ -> ExprErr tree
+  Branch pos l r -> case l of
+    Leaf _ ('n' :| "ot") -> Not pos $ parse parseExpr r
+    _ -> ExprErr tree
 
 treeTests :: Test
 treeTests = tests
