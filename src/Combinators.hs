@@ -19,6 +19,7 @@ module Combinators
   , intoM
   , satisfyM
   , matchM
+  , rest
   ) where
 
 import Control.Applicative (Alternative(empty), Applicative(liftA2))
@@ -50,6 +51,9 @@ getToken = untake takeToken
 
 getPos :: PosStream s t p => Parser s p
 getPos = Parser $ \s -> let p = pos s in (s, p)
+
+rest :: (Applicative m, Semigroup (m a)) => Parser s a -> Parser s (m a)
+rest p = liftA2 (<>) (pure <$> p) (rest p)
 
 star :: Parser s (Maybe a) -> Parser s [a]
 star p = p >>= \case

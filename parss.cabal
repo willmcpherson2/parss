@@ -41,6 +41,7 @@ test-suite test
     , Balanced
     , Abc
     , Lisp
+    , Infinite
   type: exitcode-stdio-1.0
   main-is: Main.hs
   build-depends:

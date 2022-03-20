@@ -2,6 +2,7 @@ module Main (main) where
 
 import qualified Abc
 import qualified Balanced
+import qualified Infinite
 import qualified Lisp
 import qualified Not
 import System.Exit
@@ -19,5 +20,6 @@ main = do
     , Lisp.tokenTests
     , Lisp.treeTests
     , Lisp.exprTests
+    , Infinite.tokenTests
     ]
   if errors counts + failures counts == 0 then exitSuccess else exitFailure
