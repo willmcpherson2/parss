@@ -6,6 +6,8 @@
 module Stream (Stream(..), PosStream(..)) where
 
 import qualified Control.Category as C
+import qualified Data.Text as S
+import qualified Data.Text.Lazy as L
 import Parser (Parser(Parser))
 
 class Stream s t | s -> t where
@@ -22,6 +24,16 @@ instance Stream [a] (Maybe a) where
   toParser = Parser $ \case
     [] -> ([], Nothing)
     t : ts -> (ts, Just t)
+
+instance Stream S.Text (Maybe Char) where
+  toParser = Parser $ \s -> case S.uncons s of
+    Nothing -> (s, Nothing)
+    Just (t, ts) -> (ts, Just t)
+
+instance Stream L.Text (Maybe Char) where
+  toParser = Parser $ \s -> case L.uncons s of
+    Nothing -> (s, Nothing)
+    Just (t, ts) -> (ts, Just t)
 
 instance Enum p => Stream (p, [a]) (Maybe a) where
   toParser = Parser $ \case

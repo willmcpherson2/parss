@@ -31,6 +31,7 @@ library
     , Combinators
   build-depends:
     base
+    , text
 
 test-suite test
   import: shared
@@ -42,6 +43,7 @@ test-suite test
     , Abc
     , Lisp
     , Infinite
+    , Stack
   type: exitcode-stdio-1.0
   main-is: Main.hs
   build-depends:
@@ -49,3 +51,5 @@ test-suite test
     , parss
     , HUnit
     , transformers
+    , text
+    , extra

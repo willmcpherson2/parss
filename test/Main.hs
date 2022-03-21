@@ -5,6 +5,7 @@ import qualified Balanced
 import qualified Infinite
 import qualified Lisp
 import qualified Not
+import qualified Stack
 import System.Exit
 import Test.HUnit (Counts(errors, failures), Test(TestList), runTestTT)
 
@@ -21,5 +22,6 @@ main = do
     , Lisp.treeTests
     , Lisp.exprTests
     , Infinite.tokenTests
+    , Stack.programTests
     ]
   if errors counts + failures counts == 0 then exitSuccess else exitFailure
