@@ -5,7 +5,7 @@ import Control.Arrow ((<<<), Arrow(arr))
 import Control.Monad (void)
 import Control.Monad.Trans.Class (MonadTrans(lift))
 import Control.Monad.Trans.Maybe (MaybeT(MaybeT, runMaybeT))
-import Data.Char (isAlpha)
+import Data.Char (isAlpha, isSpace)
 import Data.List.NonEmpty (NonEmpty((:|)))
 import Harness (tests)
 import Parser
@@ -13,19 +13,20 @@ import Test.HUnit (Test)
 
 exprTests :: Test
 exprTests = tests
-  (\s -> parse (parseTree <<< parseTokens) (0, s))
+  (\s -> parse (parseTree <<< parseTokens) (0, 0, s))
   [("parseExpr", parseExpr)]
   [ ("", ExprErr (TreeErr Nothing))
-  , ("true", T 0)
-  , ("false", F 0)
-  , ("(not true)", Not 0 (T 5))
-  , ("(not (not false))", Not 0 (Not 5 (F 10)))
+  , ("true", T (0, 0))
+  , ("false", F (0, 0))
+  , ("(not true)", Not (0, 0) (T (0, 5)))
+  , ("(not (not false))", Not (0, 0) (Not (0, 5) (F (0, 10))))
+  , ("\n\ntrue\n\n", T (2, 0))
   ]
 
 data Expr
-  = T Int
-  | F Int
-  | Not Int Expr
+  = T Pos
+  | F Pos
+  | Not Pos Expr
   | ExprErr Tree
   deriving (Eq, Show)
 
@@ -42,21 +43,25 @@ parseExpr = arr $ \tree -> case tree of
 
 treeTests :: Test
 treeTests = tests
-  (\s -> parse parseTokens (0, s))
+  (\s -> parse parseTokens (0, 0, s))
   [("parseTree", parseTree)]
   [ ("", TreeErr Nothing)
   , (" ", TreeErr Nothing)
-  , ("x", Leaf 0 ('x' :| []))
-  , ("1", TreeErr (Just (TokenErr 0)))
-  , (" x ", Leaf 1 ('x' :| []))
-  , ("(f x)", Branch 0 (Leaf 1 ('f' :| [])) (Leaf 3 ('x' :| [])))
-  , ("(f 1)", Branch 0 (Leaf 1 ('f' :| [])) (TreeErr (Just (TokenErr 3))))
-  , (" ( f x ) ", Branch 1 (Leaf 3 ('f' :| [])) (Leaf 5 ('x' :| [])))
+  , ("x", Leaf (0, 0) ('x' :| []))
+  , ("1", TreeErr (Just (TokenErr (0, 0))))
+  , (" x ", Leaf (0, 1) ('x' :| []))
+  , ("(f x)", Branch (0, 0) (Leaf (0, 1) ('f' :| [])) (Leaf (0, 3) ('x' :| [])))
+  , ( "(f 1)"
+    , Branch (0, 0) (Leaf (0, 1) ('f' :| [])) (TreeErr (Just (TokenErr (0, 3))))
+    )
+  , ( " ( f x ) "
+    , Branch (0, 1) (Leaf (0, 3) ('f' :| [])) (Leaf (0, 5) ('x' :| []))
+    )
   ]
 
 data Tree
-  = Branch Int Tree Tree
-  | Leaf Int (NonEmpty Char)
+  = Branch Pos Tree Tree
+  | Leaf Pos (NonEmpty Char)
   | TreeErr (Maybe Token)
   deriving (Eq, Show)
 
@@ -77,30 +82,32 @@ parseTree =
 
 tokenTests :: Test
 tokenTests = tests
-  (0, )
+  (0, 0, )
   [("parseTokens", parseTokens)]
   [ ("", [])
-  , ("()", [Open 0, Close 1])
-  , ("(())", [Open 0, Open 1, Close 2, Close 3])
-  , ("(a)", [Open 0, Name 1 ('a' :| []), Close 2])
-  , ("foo()", [Name 0 ('f' :| "oo"), Open 3, Close 4])
-  , ("(1)", [Open 0, TokenErr 1, Close 2])
+  , ("()", [Open (0, 0), Close (0, 1)])
+  , ("(())", [Open (0, 0), Open (0, 1), Close (0, 2), Close (0, 3)])
+  , ("(a)", [Open (0, 0), Name (0, 1) ('a' :| []), Close (0, 2)])
+  , ("foo()", [Name (0, 0) ('f' :| "oo"), Open (0, 3), Close (0, 4)])
+  , ("(1)", [Open (0, 0), TokenErr (0, 1), Close (0, 2)])
   , (" ", [])
-  , (" ( foo ) ", [Open 1, Name 3 ('f' :| "oo"), Close 7])
-  , (" ( 12 ) ", [Open 1, TokenErr 3, TokenErr 4, Close 6])
+  , (" ( foo ) ", [Open (0, 1), Name (0, 3) ('f' :| "oo"), Close (0, 7)])
+  , (" ( 12 ) ", [Open (0, 1), TokenErr (0, 3), TokenErr (0, 4), Close (0, 6)])
   ]
 
 data Token
-  = Open Int
-  | Close Int
-  | Name Int (NonEmpty Char)
-  | TokenErr Int
+  = Open Pos
+  | Close Pos
+  | Name Pos (NonEmpty Char)
+  | TokenErr Pos
   deriving (Eq, Show)
 
-parseTokens :: Parser (Int, String) [Token]
+type Pos = (Int, Int)
+
+parseTokens :: Parser (Int, Int, String) [Token]
 parseTokens =
   let
-    skipSpace = void $ star $ try $ matchM ' '
+    skipSpace = void $ star $ try $ satisfyM isSpace
     open = runMaybeT $ do
       pos <- lift getPos
       MaybeT $ try $ matchM '('

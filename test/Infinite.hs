@@ -21,7 +21,7 @@ data Inf a = Cons a (Inf a)
   deriving (Show, Eq)
 
 instance Stream (Inf a) a where
-  toParser = Parser $ \(Cons x xs) -> (xs, x)
+  stream (Cons x xs) = (xs, x)
 
 instance Functor Inf where
   fmap f (Cons x xs) = Cons (f x) (fmap f xs)

@@ -23,11 +23,13 @@ module Combinators
   ) where
 
 import Control.Applicative (Alternative(empty), Applicative(liftA2))
+import Control.Arrow (Arrow(arr))
 import qualified Control.Category as C
 import Data.Functor ((<&>))
 import Data.List.NonEmpty (NonEmpty, nonEmpty)
 import Parser
-import Stream
+import qualified Stream as S
+import Stream (GetPos, Stream(stream))
 
 getStream :: Parser s s
 getStream = C.id
@@ -44,13 +46,13 @@ try (Parser p) = Parser $ \s ->
       Nothing -> (s, Nothing)
 
 takeToken :: Stream s t => Parser s t
-takeToken = toParser
+takeToken = Parser stream
 
 getToken :: Stream s t => Parser s t
 getToken = untake takeToken
 
-getPos :: PosStream s t p => Parser s p
-getPos = Parser $ \s -> let p = pos s in (s, p)
+getPos :: GetPos s p => Parser s p
+getPos = arr S.getPos
 
 rest :: (Applicative m, Semigroup (m a)) => Parser s a -> Parser s (m a)
 rest p = liftA2 (<>) (pure <$> p) (rest p)
