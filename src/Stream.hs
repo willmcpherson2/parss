@@ -12,34 +12,38 @@ class Stream s t | s -> t where
 class GetPos s p | s -> p where
   getPos :: s -> p
 
+--------------------------------------------------------------------------------
+
 instance Stream [a] (Maybe a) where
-  stream = \case
-    [] -> ([], Nothing)
+  stream s = case s of
     t : ts -> (ts, Just t)
+    [] -> (s, Nothing)
 
 instance Stream S.Text (Maybe Char) where
-  stream = \s -> case S.uncons s of
-    Nothing -> (s, Nothing)
+  stream s = case S.uncons s of
     Just (t, ts) -> (ts, Just t)
+    Nothing -> (s, Nothing)
 
 instance Stream L.Text (Maybe Char) where
-  stream = \s -> case L.uncons s of
-    Nothing -> (s, Nothing)
+  stream s = case L.uncons s of
     Just (t, ts) -> (ts, Just t)
+    Nothing -> (s, Nothing)
 
 instance Enum p => Stream (p, [a]) (Maybe a) where
-  stream = \case
-    (pos, []) -> ((pos, []), Nothing)
+  stream s = case s of
     (pos, t : ts) -> ((succ pos, ts), Just t)
+    _ -> (s, Nothing)
+
+instance (Num l, Num c) => Stream (l, c, String) (Maybe Char) where
+  stream s = case s of
+    (line, _, t@'\n' : ts) -> ((line + 1, 0, ts), Just t)
+    (line, column, t : ts) -> ((line, column + 1, ts), Just t)
+    _ -> (s, Nothing)
+
+--------------------------------------------------------------------------------
 
 instance GetPos (p, a) p where
   getPos = fst
 
-instance (Num l, Num c) => Stream (l, c, String) (Maybe Char) where
-  stream = \case
-    (line, _, t@'\n' : ts) -> ((line + 1, 0, ts), Just t)
-    (line, column, t : ts) -> ((line, column + 1, ts), Just t)
-    s -> (s, Nothing)
-
 instance GetPos (l, c, a) (l, c) where
-  getPos = \(l, c, _) -> (l, c)
+  getPos (l, c, _) = (l, c)
