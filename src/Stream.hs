@@ -1,18 +1,13 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
 
-module Stream (Stream(..), GetPos(..)) where
+module Stream (Stream(..)) where
 
 import qualified Data.Text as S
 import qualified Data.Text.Lazy as L
 
 class Stream s t | s -> t where
   stream :: s -> (s, t)
-
-class GetPos s p | s -> p where
-  getPos :: s -> p
-
---------------------------------------------------------------------------------
 
 instance Stream [a] (Maybe a) where
   stream s = case s of
@@ -39,11 +34,3 @@ instance (Num l, Num c) => Stream (l, c, String) (Maybe Char) where
     (line, _, t@'\n' : ts) -> ((line + 1, 0, ts), Just t)
     (line, column, t : ts) -> ((line, column + 1, ts), Just t)
     _ -> (s, Nothing)
-
---------------------------------------------------------------------------------
-
-instance GetPos (p, a) p where
-  getPos = fst
-
-instance GetPos (l, c, a) (l, c) where
-  getPos (l, c, _) = (l, c)

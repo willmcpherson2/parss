@@ -28,8 +28,9 @@ import qualified Control.Category as C
 import Data.Functor ((<&>))
 import Data.List.NonEmpty (NonEmpty, nonEmpty)
 import Parser
-import qualified Stream as S
-import Stream (GetPos, Stream(stream))
+import Stream (Stream(stream))
+import GetPos (GetPos)
+import qualified GetPos as G
 
 getStream :: Parser s s
 getStream = C.id
@@ -52,7 +53,7 @@ getToken :: Stream s t => Parser s t
 getToken = untake takeToken
 
 getPos :: GetPos s p => Parser s p
-getPos = arr S.getPos
+getPos = arr G.getPos
 
 rest :: (Applicative m, Semigroup (m a)) => Parser s a -> Parser s (m a)
 rest p = liftA2 (<>) (pure <$> p) (rest p)
