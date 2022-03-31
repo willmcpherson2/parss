@@ -1,5 +1,4 @@
 {-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE FlexibleInstances #-}
 
 module GetPos (GetPos(..)) where
 
