@@ -3,24 +3,23 @@ name: parss
 version: 0.1.0.0
 
 common shared
-  default-language: Haskell2010
+  default-language: GHC2021
   default-extensions:
     LambdaCase
-    , TupleSections
   ghc-options:
     -Weverything
-    -Wno-implicit-prelude
-    -Wno-name-shadowing
-    -Wno-unused-do-bind
-    -Wno-monomorphism-restriction
-    -Wno-all-missed-specialisations
-    -Wno-missing-deriving-strategies
     -Wno-missing-safe-haskell-mode
-    -Wno-safe
+    -Wno-implicit-prelude
+    -Wno-missing-kind-signatures
+    -Wno-missing-deriving-strategies
+    -Wno-name-shadowing
     -Wno-unsafe
-    -Wno-missing-local-signatures
     -Wno-missing-import-lists
     -Wno-prepositive-qualified-module
+    -Wno-unused-do-bind
+    -Wno-missed-specialisations
+    -Wno-all-missed-specialisations
+    -Wno-monomorphism-restriction
 
 library
   import: shared
