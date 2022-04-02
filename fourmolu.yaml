@@ -1,0 +1,4 @@
+indentation: 2
+indent-wheres: true
+diff-friendly-import-export: false
+respectful: false

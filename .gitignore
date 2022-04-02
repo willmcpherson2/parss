@@ -3,7 +3,7 @@
 
 !.gitignore
 !LICENSE
-!brittany.yaml
+!fourmolu.yaml
 !parss.cabal
 !src
 !src/**

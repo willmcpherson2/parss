@@ -1,6 +1,6 @@
 {-# LANGUAGE FunctionalDependencies #-}
 
-module GetPos (GetPos(..)) where
+module GetPos (GetPos (..)) where
 
 class GetPos s p | s -> p where
   getPos :: s -> p

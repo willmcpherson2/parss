@@ -1,9 +1,9 @@
 {-# LANGUAGE FunctionalDependencies #-}
 
-module Stream (Stream(..)) where
+module Stream (Stream (..)) where
 
-import qualified Data.Text as S
-import qualified Data.Text.Lazy as L
+import Data.Text qualified as S
+import Data.Text.Lazy qualified as L
 
 class Stream s t | s -> t where
   stream :: s -> (s, t)
