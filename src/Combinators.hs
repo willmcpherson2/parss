@@ -18,6 +18,7 @@ module Combinators
     matchM,
     rest,
     getPos,
+    matchesM,
   )
 where
 
@@ -80,6 +81,9 @@ match x = satisfy (== x)
 
 matchM :: (Monad m, Alternative m, Stream s (m a), Eq a) => a -> Parser s (m a)
 matchM x = satisfyM (== x)
+
+matchesM :: (Monad m, Alternative m, Stream s (m a), Eq a) => [a] -> Parser s (m [a])
+matchesM = fmap sequence . sequence . map matchM
 
 infixl 3 <<|>>
 
