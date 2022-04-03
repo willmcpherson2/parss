@@ -1,3 +1,5 @@
+{-# LANGUAGE FunctionalDependencies #-}
+
 module Stream (Stream (..), Pos (..)) where
 
 import Data.ByteString qualified as SB
@@ -8,7 +10,7 @@ import Data.Text.Lazy qualified as LT
 import Data.Word (Word8)
 import Parser
 
-class Stream s a where
+class Stream s a | s -> a where
   takeToken :: Parser s a
 
 data Pos s = Pos {prev :: s, rest :: s}
