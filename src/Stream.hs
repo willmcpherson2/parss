@@ -14,6 +14,7 @@ class Stream s a | s -> a where
   takeToken :: Parser s a
 
 data Pos s = Pos {prev :: s, rest :: s}
+  deriving (Show)
 
 doTakeToken :: (s -> Maybe (a, s)) -> (a -> s -> s) -> Parser (Pos s) (Maybe a)
 doTakeToken uncons cons = Parser $ \s@Pos{prev, rest} -> case uncons rest of
