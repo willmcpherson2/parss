@@ -1,6 +1,6 @@
 {-# LANGUAGE FunctionalDependencies #-}
 
-module Stream (Stream (..)) where
+module Stream (Stream (..), Pos (..)) where
 
 import Data.ByteString qualified as SB
 import Data.ByteString.Lazy qualified as LB
