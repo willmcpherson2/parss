@@ -17,7 +17,7 @@ module Combinators
     satisfyM,
     matchM,
     rest,
-    getState,
+    getPos,
   )
 where
 
@@ -38,8 +38,8 @@ try (Parser p) = Parser $ \s ->
         Just x -> (s', Just x)
         Nothing -> (s, Nothing)
 
-getState :: Parser s s
-getState = C.id
+getPos :: Parser s s
+getPos = C.id
 
 getToken :: Stream s t => Parser s t
 getToken = untake takeToken
