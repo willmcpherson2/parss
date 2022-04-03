@@ -27,29 +27,20 @@ library
   exposed-modules:
     Parser
     , Stream
-    , GetPos
     , Combinators
   build-depends:
     base
     , text
+    , bytestring
 
 test-suite test
   import: shared
   hs-source-dirs: test
   other-modules:
     Harness
-    , Not
-    , Balanced
-    , Abc
-    , Lisp
-    , Infinite
-    , Stack
   type: exitcode-stdio-1.0
   main-is: Main.hs
   build-depends:
     base
     , parss
     , HUnit
-    , transformers
-    , text
-    , extra

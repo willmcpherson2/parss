@@ -7,6 +7,9 @@ import Control.Category qualified (Category (id, (.)))
 
 newtype Parser s a = Parser {runParser :: s -> (s, a)}
 
+parse :: Parser s a -> s -> a
+parse (Parser p) = snd . p
+
 instance Functor (Parser s) where
   fmap f (Parser p) = Parser $ \s -> let (s', x) = p s in (s', f x)
 
@@ -39,6 +42,3 @@ instance Semigroup a => Semigroup (Parser s a) where
 
 instance Monoid a => Monoid (Parser s a) where
   mempty = pure mempty
-
-parse :: Parser s a -> s -> a
-parse (Parser p) = snd . p

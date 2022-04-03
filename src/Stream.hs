@@ -2,34 +2,33 @@
 
 module Stream (Stream (..)) where
 
-import Data.Text qualified as S
-import Data.Text.Lazy qualified as L
+import Data.ByteString qualified as SB
+import Data.ByteString.Lazy qualified as LB
+import Data.List (uncons)
+import Data.Text qualified as ST
+import Data.Text.Lazy qualified as LT
+import Data.Word (Word8)
+import Parser
 
-class Stream s t | s -> t where
-  stream :: s -> (s, t)
+class Stream s a | s -> a where
+  takeToken :: Parser s a
 
-instance Stream [a] (Maybe a) where
-  stream s = case s of
-    t : ts -> (ts, Just t)
-    [] -> (s, Nothing)
+doTakeToken :: (s -> Maybe (a, s)) -> (a -> s -> s) -> Parser (s, s) (Maybe a)
+doTakeToken uncons cons = Parser $ \s@(prev, rest) -> case uncons rest of
+  Just (t, rest) -> ((cons t prev, rest), Just t)
+  Nothing -> (s, Nothing)
 
-instance Stream S.Text (Maybe Char) where
-  stream s = case S.uncons s of
-    Just (t, ts) -> (ts, Just t)
-    Nothing -> (s, Nothing)
+instance Stream ([a], [a]) (Maybe a) where
+  takeToken = doTakeToken uncons (:)
 
-instance Stream L.Text (Maybe Char) where
-  stream s = case L.uncons s of
-    Just (t, ts) -> (ts, Just t)
-    Nothing -> (s, Nothing)
+instance Stream (ST.Text, ST.Text) (Maybe Char) where
+  takeToken = doTakeToken ST.uncons ST.cons
 
-instance Enum p => Stream (p, [a]) (Maybe a) where
-  stream s = case s of
-    (pos, t : ts) -> ((succ pos, ts), Just t)
-    _ -> (s, Nothing)
+instance Stream (LT.Text, LT.Text) (Maybe Char) where
+  takeToken = doTakeToken LT.uncons LT.cons
 
-instance (Num l, Num c) => Stream (l, c, String) (Maybe Char) where
-  stream s = case s of
-    (line, _, t@'\n' : ts) -> ((line + 1, 0, ts), Just t)
-    (line, column, t : ts) -> ((line, column + 1, ts), Just t)
-    _ -> (s, Nothing)
+instance Stream (SB.ByteString, SB.ByteString) (Maybe Word8) where
+  takeToken = doTakeToken SB.uncons SB.cons
+
+instance Stream (LB.ByteString, LB.ByteString) (Maybe Word8) where
+  takeToken = doTakeToken LB.uncons LB.cons

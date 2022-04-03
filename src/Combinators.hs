@@ -1,11 +1,8 @@
 module Combinators
   ( untake,
     try,
-    takeToken,
     getToken,
-    getPos,
     star,
-    getStream,
     (<<|>>),
     match,
     satisfy,
@@ -20,21 +17,16 @@ module Combinators
     satisfyM,
     matchM,
     rest,
+    getState,
   )
 where
 
 import Control.Applicative (Alternative (empty), Applicative (liftA2))
-import Control.Arrow (Arrow (arr))
 import Control.Category qualified as C
 import Data.Functor ((<&>))
 import Data.List.NonEmpty (NonEmpty, nonEmpty)
-import GetPos (GetPos)
-import GetPos qualified as G
 import Parser
-import Stream (Stream (stream))
-
-getStream :: Parser s s
-getStream = C.id
+import Stream (Stream (takeToken))
 
 untake :: Parser s a -> Parser s a
 untake (Parser p) = Parser $ \s -> let (_, x) = p s in (s, x)
@@ -46,14 +38,11 @@ try (Parser p) = Parser $ \s ->
         Just x -> (s', Just x)
         Nothing -> (s, Nothing)
 
-takeToken :: Stream s t => Parser s t
-takeToken = Parser stream
+getState :: Parser s s
+getState = C.id
 
 getToken :: Stream s t => Parser s t
 getToken = untake takeToken
-
-getPos :: GetPos s p => Parser s p
-getPos = arr G.getPos
 
 rest :: (Applicative m, Semigroup (m a)) => Parser s a -> Parser s (m a)
 rest p = liftA2 (<>) (pure <$> p) (rest p)
@@ -67,7 +56,7 @@ star p =
 plus :: Parser s (Maybe a) -> Parser s (Maybe (NonEmpty a))
 plus = fmap nonEmpty . star
 
-upto :: Parser s a -> Parser s (Maybe ()) -> Parser s [a]
+upto :: Parser s a -> Parser s (Maybe b) -> Parser s [a]
 upto p q =
   q >>= \case
     Just{} -> pure []
