@@ -23,7 +23,7 @@ module Combinators
 where
 
 import Control.Applicative (Alternative (empty), Applicative (liftA2))
-import Control.Category qualified as C
+import Control.Arrow (Arrow (arr))
 import Data.Functor ((<&>))
 import Data.List.NonEmpty (NonEmpty, nonEmpty)
 import Parser
@@ -39,8 +39,8 @@ try (Parser p) = Parser $ \s ->
         Just x -> (s', Just x)
         Nothing -> (s, Nothing)
 
-getPos :: Parser s s
-getPos = C.id
+getPos :: Parser (p, s) p
+getPos = arr fst
 
 getToken :: Stream s t => Parser s t
 getToken = untake takeToken
