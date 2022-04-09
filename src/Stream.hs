@@ -29,17 +29,17 @@ instance Stream [a] (Maybe a) where
 instance Enum p => Stream (p, [a]) (Maybe a) where
   takeToken = doTakePosToken uncons
 
-instance Enum p => Stream (p, ST.Text) (Maybe Char) where
-  takeToken = doTakePosToken ST.uncons
-
 instance Stream ST.Text (Maybe Char) where
   takeToken = doTakeToken ST.uncons
 
-instance Enum p => Stream (p, LT.Text) (Maybe Char) where
-  takeToken = doTakePosToken LT.uncons
+instance Enum p => Stream (p, ST.Text) (Maybe Char) where
+  takeToken = doTakePosToken ST.uncons
 
 instance Stream LT.Text (Maybe Char) where
   takeToken = doTakeToken LT.uncons
+
+instance Enum p => Stream (p, LT.Text) (Maybe Char) where
+  takeToken = doTakePosToken LT.uncons
 
 instance Enum p => Stream (p, SB.ByteString) (Maybe Word8) where
   takeToken = doTakePosToken SB.uncons
@@ -47,8 +47,8 @@ instance Enum p => Stream (p, SB.ByteString) (Maybe Word8) where
 instance Stream SB.ByteString (Maybe Word8) where
   takeToken = doTakeToken SB.uncons
 
-instance Enum p => Stream (p, LB.ByteString) (Maybe Word8) where
-  takeToken = doTakePosToken LB.uncons
-
 instance Stream LB.ByteString (Maybe Word8) where
   takeToken = doTakeToken LB.uncons
+
+instance Enum p => Stream (p, LB.ByteString) (Maybe Word8) where
+  takeToken = doTakePosToken LB.uncons
