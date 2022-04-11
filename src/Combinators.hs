@@ -19,6 +19,7 @@ module Combinators
     rest,
     getPos,
     matchesM,
+    uptoM,
   )
 where
 
@@ -62,6 +63,15 @@ upto p q =
   q >>= \case
     Just{} -> pure []
     Nothing -> liftA2 (:) p (upto p q)
+
+uptoM :: Parser s (Maybe a) -> Parser s (Maybe b) -> Parser s [a]
+uptoM p q =
+  q >>= \case
+    Just{} -> pure []
+    Nothing ->
+      p >>= \case
+        Just x -> (x :) <$> uptoM p q
+        Nothing -> pure []
 
 into :: Stream s t => (t -> a) -> Parser s a
 into f = f <$> takeToken
