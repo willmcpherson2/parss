@@ -64,14 +64,8 @@ upto p q =
     Just{} -> pure []
     Nothing -> liftA2 (:) p (upto p q)
 
-uptoM :: Parser s (Maybe a) -> Parser s (Maybe b) -> Parser s [a]
-uptoM p q =
-  q >>= \case
-    Just{} -> pure []
-    Nothing ->
-      p >>= \case
-        Just x -> (x :) <$> uptoM p q
-        Nothing -> pure []
+uptoM :: Monad m => Parser s (m a) -> Parser s (Maybe b) -> Parser s (m [a])
+uptoM p q = sequence <$> upto p q
 
 into :: Stream s t => (t -> a) -> Parser s a
 into f = f <$> takeToken
