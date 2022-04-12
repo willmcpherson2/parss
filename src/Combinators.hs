@@ -21,6 +21,7 @@ module Combinators
     matchesM,
     matches,
     endWith,
+    uptoIncluding,
   )
 where
 
@@ -87,6 +88,12 @@ unless p q =
 
 upto :: Parser s (Maybe a) -> Parser s (Maybe b) -> Parser s [a]
 upto p q = star $ p `unless` untake q
+
+uptoIncluding :: Parser s (Maybe a) -> Parser s (Maybe b) -> Parser s [a]
+uptoIncluding p q = do
+  xs <- p `upto` q
+  q
+  pure xs
 
 endWith :: Parser s (Maybe a) -> Parser s (Maybe b) -> Parser s (Maybe [a])
 endWith p q = do
