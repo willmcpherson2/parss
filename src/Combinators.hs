@@ -17,15 +17,14 @@ module Combinators
     intoM,
     satisfyM,
     matchM,
-    rest,
     getPos,
     matchesM,
+    matches,
   )
 where
 
-import Control.Applicative (Alternative (empty), Applicative (liftA2))
 import Control.Arrow (Arrow (arr))
-import Data.Functor (($>), (<&>))
+import Data.Functor ((<&>))
 import Data.List.NonEmpty (NonEmpty, nonEmpty)
 import Parser
 import Stream (Stream (takeToken))
@@ -46,8 +45,29 @@ getPos = arr fst
 getToken :: Stream s t => Parser s t
 getToken = untake takeToken
 
-rest :: (Applicative m, Semigroup (m a)) => Parser s a -> Parser s (m a)
-rest p = liftA2 (<>) (pure <$> p) (rest p)
+into :: Stream s t => (t -> a) -> Parser s a
+into f = f <$> takeToken
+
+intoM :: Stream s (Maybe t) => (t -> Maybe a) -> Parser s (Maybe a)
+intoM f = into $ \x -> x >>= f
+
+satisfy :: Stream s a => (a -> Bool) -> Parser s (Maybe a)
+satisfy f = into $ \t -> if f t then Just t else Nothing
+
+satisfyM :: (Stream s (Maybe a)) => (a -> Bool) -> Parser s (Maybe a)
+satisfyM f = intoM $ \t -> if f t then Just t else Nothing
+
+match :: (Stream s t, Eq t) => t -> Parser s (Maybe t)
+match x = satisfy (== x)
+
+matchM :: (Stream s (Maybe a), Eq a) => a -> Parser s (Maybe a)
+matchM x = satisfyM (== x)
+
+matches :: (Stream s a, Eq a) => [a] -> Parser s (Maybe [a])
+matches = fmap sequence . sequence . map match
+
+matchesM :: (Stream s (Maybe a), Eq a) => [a] -> Parser s (Maybe [a])
+matchesM = fmap sequence . sequence . map matchM
 
 star :: Parser s (Maybe a) -> Parser s [a]
 star p =
@@ -58,47 +78,22 @@ star p =
 plus :: Parser s (Maybe a) -> Parser s (Maybe (NonEmpty a))
 plus = fmap nonEmpty . star
 
-upto :: Parser s (Maybe a) -> Parser s (Maybe b) -> Parser s (Maybe [a])
-upto p q = do
-  xs <- star $ try $ p `unless` q
-  y <- p
-  pure $ y $> xs
-
 unless :: Parser s (Maybe a) -> Parser s (Maybe b) -> Parser s (Maybe a)
 unless p q =
   q >>= \case
     Just{} -> pure Nothing
     Nothing -> p
 
-into :: Stream s t => (t -> a) -> Parser s a
-into f = f <$> takeToken
-
-intoM :: (Monad m, Stream s (m t)) => (t -> m a) -> Parser s (m a)
-intoM f = into $ \x -> x >>= f
-
-satisfy :: (Stream s t, Alternative f) => (t -> Bool) -> Parser s (f t)
-satisfy f = into $ \t -> if f t then pure t else empty
-
-satisfyM ::
-  (Monad m, Alternative m, Stream s (m a)) => (a -> Bool) -> Parser s (m a)
-satisfyM f = intoM $ \t -> if f t then pure t else empty
-
-match :: (Stream s t, Eq t, Alternative f) => t -> Parser s (f t)
-match x = satisfy (== x)
-
-matchM :: (Monad m, Alternative m, Stream s (m a), Eq a) => a -> Parser s (m a)
-matchM x = satisfyM (== x)
-
-matchesM :: (Monad m, Alternative m, Stream s (m a), Eq a) => [a] -> Parser s (m [a])
-matchesM = fmap sequence . sequence . map matchM
+upto :: Parser s (Maybe a) -> Parser s (Maybe b) -> Parser s [a]
+upto p q = star $ p `unless` q
 
 infixl 3 <<|>>
 
-(<<|>>) :: Alternative f => Parser s (Maybe a) -> Parser s (Maybe a) -> Parser s (f a)
+(<<|>>) :: Parser s (Maybe a) -> Parser s (Maybe a) -> Parser s (Maybe a)
 (Parser p) <<|>> (Parser q) = Parser $ \s -> case (p s, q s) of
   ((s', Just x), _) -> (s', pure x)
   (_, (s', Just x)) -> (s', pure x)
-  _ -> (s, empty)
+  _ -> (s, Nothing)
 
 infixl 0 |>>
 
