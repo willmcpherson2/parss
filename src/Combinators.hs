@@ -86,11 +86,11 @@ unless p q =
     Nothing -> p
 
 upto :: Parser s (Maybe a) -> Parser s (Maybe b) -> Parser s [a]
-upto p q = star $ p `unless` q
+upto p q = star $ p `unless` untake q
 
 endWith :: Parser s (Maybe a) -> Parser s (Maybe b) -> Parser s (Maybe [a])
 endWith p q = do
-  xs <- p `upto` untake q
+  xs <- p `upto` q
   x <- q
   pure $ xs <$ x
 
