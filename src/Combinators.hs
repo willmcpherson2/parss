@@ -12,6 +12,7 @@ module Combinators
     (<<!),
     (<<|),
     upto,
+    unless,
     into,
     intoM,
     satisfyM,
@@ -19,13 +20,12 @@ module Combinators
     rest,
     getPos,
     matchesM,
-    uptoM,
   )
 where
 
 import Control.Applicative (Alternative (empty), Applicative (liftA2))
 import Control.Arrow (Arrow (arr))
-import Data.Functor ((<&>))
+import Data.Functor (($>), (<&>))
 import Data.List.NonEmpty (NonEmpty, nonEmpty)
 import Parser
 import Stream (Stream (takeToken))
@@ -58,14 +58,17 @@ star p =
 plus :: Parser s (Maybe a) -> Parser s (Maybe (NonEmpty a))
 plus = fmap nonEmpty . star
 
-upto :: Parser s a -> Parser s (Maybe b) -> Parser s [a]
-upto p q =
-  q >>= \case
-    Just{} -> pure []
-    Nothing -> liftA2 (:) p (upto p q)
+upto :: Parser s (Maybe a) -> Parser s (Maybe b) -> Parser s (Maybe [a])
+upto p q = do
+  xs <- star $ try $ p `unless` q
+  y <- p
+  pure $ y $> xs
 
-uptoM :: Monad m => Parser s (m a) -> Parser s (Maybe b) -> Parser s (m [a])
-uptoM p q = sequence <$> upto p q
+unless :: Parser s (Maybe a) -> Parser s (Maybe b) -> Parser s (Maybe a)
+unless p q =
+  q >>= \case
+    Just{} -> pure Nothing
+    Nothing -> p
 
 into :: Stream s t => (t -> a) -> Parser s a
 into f = f <$> takeToken
