@@ -2,11 +2,11 @@
 
 module Stream (Stream (..)) where
 
-import Data.ByteString qualified as SB
-import Data.ByteString.Lazy qualified as LB
+import qualified Data.ByteString as SB
+import qualified Data.ByteString.Lazy as LB
 import Data.List (uncons)
-import Data.Text qualified as ST
-import Data.Text.Lazy qualified as LT
+import qualified Data.Text as ST
+import qualified Data.Text.Lazy as LT
 import Data.Word (Word8)
 import Parser
 

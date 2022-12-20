@@ -3,7 +3,7 @@ module Parser (Parser (..), parse) where
 import Control.Applicative (Applicative (liftA2))
 import Control.Arrow
 import Control.Category (Category)
-import Control.Category qualified (Category (id, (.)))
+import qualified Control.Category (Category (id, (.)))
 
 newtype Parser s a = Parser {runParser :: s -> (s, a)}
 
