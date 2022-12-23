@@ -66,10 +66,10 @@ matchM :: (Stream s (Maybe a), Eq a) => a -> Parser s (Maybe a)
 matchM x = satisfyM (== x)
 
 matches :: (Stream s a, Eq a) => [a] -> Parser s (Maybe [a])
-matches = fmap sequence . sequence . map match
+matches = fmap sequence . mapM match
 
 matchesM :: (Stream s (Maybe a), Eq a) => [a] -> Parser s (Maybe [a])
-matchesM = fmap sequence . sequence . map matchM
+matchesM = fmap sequence . mapM matchM
 
 star :: Parser s (Maybe a) -> Parser s [a]
 star p =
