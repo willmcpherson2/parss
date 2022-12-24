@@ -1,11 +1,1 @@
-*
-*/*
-
-!.gitignore
-!LICENSE
-!fourmolu.yaml
-!parss.cabal
-!src
-!src/**
-!test
-!test/**
+dist-newstyle
