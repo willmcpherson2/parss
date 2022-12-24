@@ -83,7 +83,7 @@ plus = fmap nonEmpty . star
 unless :: Parser s (Maybe a) -> Parser s (Maybe b) -> Parser s (Maybe a)
 unless p q =
   q >>= \case
-    Just{} -> pure Nothing
+    Just {} -> pure Nothing
     Nothing -> p
 
 upto :: Parser s (Maybe a) -> Parser s (Maybe b) -> Parser s [a]
