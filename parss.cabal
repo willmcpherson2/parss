@@ -2,7 +2,7 @@ cabal-version: 2.4
 name: parss
 version: 0.1.0.0
 
-common shared
+common common
   default-language: Haskell2010
   default-extensions:
     LambdaCase
@@ -11,22 +11,19 @@ common shared
     , FlexibleContexts
   ghc-options:
     -Weverything
-    -Wno-missing-safe-haskell-mode
     -Wno-implicit-prelude
-    -Wno-missing-kind-signatures
-    -Wno-missing-deriving-strategies
     -Wno-name-shadowing
     -Wno-unsafe
     -Wno-missing-import-lists
-    -Wno-prepositive-qualified-module
     -Wno-unused-do-bind
     -Wno-missed-specialisations
     -Wno-all-missed-specialisations
     -Wno-monomorphism-restriction
     -Wno-missing-local-signatures
+    -Wno-safe
 
 library
-  import: shared
+  import: common
   hs-source-dirs: src
   exposed-modules:
     Parser
@@ -38,7 +35,7 @@ library
     , bytestring
 
 test-suite test
-  import: shared
+  import: common
   hs-source-dirs: test
   other-modules:
     Harness
