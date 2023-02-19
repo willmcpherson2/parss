@@ -31,8 +31,6 @@ library
     , Combinators
   build-depends:
     base
-    , text
-    , bytestring
 
 test-suite test
   import: common
