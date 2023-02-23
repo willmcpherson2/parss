@@ -26,11 +26,13 @@ library
   import: common
   hs-source-dirs: src
   exposed-modules:
-    Parser
-    , Stream
-    , Combinators
+    Parss.Parser
+    Parss.Stream
+    Parss.Combinators
+    Parss.Trans
   build-depends:
     base
+    , transformers
 
 test-suite test
   import: common
