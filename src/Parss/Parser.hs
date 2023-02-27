@@ -1,9 +1,9 @@
 module Parss.Parser (Parser (..), parse) where
 
-import Control.Arrow (Arrow, arr)
+import Control.Arrow (Arrow)
 import qualified Control.Arrow
 import Control.Category (Category)
-import qualified Control.Category as C
+import qualified Control.Category
 
 newtype Parser m s a = Parser {runParser :: s -> (m, s, a)}
 
