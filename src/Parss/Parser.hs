@@ -5,8 +5,11 @@ import qualified Control.Arrow
 import Control.Category (Category)
 import qualified Control.Category
 
+-- | Parser from source 's' to match 'm', updated source 's' and
+-- result 'a'.
 newtype Parser m s a = Parser {runParser :: s -> (m, s, a)}
 
+-- | Run the parser with source 's' and just get the result 'a'.
 parse :: Parser m s a -> s -> a
 parse p s = let (_, _, x) = runParser p s in x
 

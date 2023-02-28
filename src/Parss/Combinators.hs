@@ -56,7 +56,12 @@ right :: Monoid m => Parser m (l, r) r
 right = Parser $ \(l, r) -> (mempty, (l, r), r)
 
 -- | For a parser returning a result that accepts a location, creates
--- a parser that supplies the location.
+-- a parser that supplies the location. Keep in mind that the previous
+-- input 'l' is usually in reverse because it's in order of
+-- recency. This depends on the 'Stream' instance being used.
+--
+-- >>> parse (locate $ literal "34" >> pure (,True)) ("21", "3456")
+-- (("21","34","56"),True)
 locate :: Monoid m => Parser m (l, r) ((l, m, r) -> a) -> Parser m (l, r) a
 locate p = do
   l <- left
@@ -64,8 +69,7 @@ locate p = do
   r <- right
   pure $ f (l, m, r)
 
--- | For a parser returning a result that accepts a location, creates
--- a parser that supplies the location.
+-- | 'locate' for a parser returning an applicative, usually @Maybe@.
 locateM ::
   (Monoid m, Applicative f) =>
   Parser m (l, r) (f ((l, m, r) -> a)) ->
