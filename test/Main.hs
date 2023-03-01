@@ -97,12 +97,12 @@ data Tree
   deriving (Eq, Show)
 
 parseTree :: Parser Match Source Tree
-parseTree = parseSubTree `orElse` locate (pure $ TreeErr ExpectedTree)
+parseTree = try parseSubTree `orElse` locate (pure $ TreeErr ExpectedTree)
 
 parseSubTree :: Parser Match Source (Maybe Tree)
 parseSubTree = do
   skipSpace
-  parseParens `or` parseWord
+  try parseParens `or` parseWord
 
 parseParens :: Parser Match Source (Maybe Tree)
 parseParens = locateM . fallible $ do

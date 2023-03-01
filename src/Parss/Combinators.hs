@@ -159,7 +159,7 @@ plus = fmap nonEmpty . star
 
 -- | Like regular expression @a|b@.
 --
--- >>> parse (is 'a' `or` is 'b') "a"
+-- >>> parse (try (is 'a') `or` is 'b') "a"
 -- Just 'a'
 or ::
   Monoid m =>
@@ -167,19 +167,19 @@ or ::
   Parser m s (Maybe a) ->
   Parser m s (Maybe a)
 or p q =
-  try p >>= \case
+  p >>= \case
     Just x -> pure $ pure x
-    Nothing -> try q
+    Nothing -> q
 
 infixl 3 `or`
 
 -- | Try @p@, otherwise fall back to @q@.
 --
--- >>> parse (is 'a' `or` is 'b' `orElse` pure 'c') "x"
+-- >>> parse (try (is 'a') `or` try (is 'b') `orElse` pure 'c') "x"
 -- 'c'
 orElse :: Monoid m => Parser m s (Maybe a) -> Parser m s a -> Parser m s a
 orElse p q =
-  try p >>= \case
+  p >>= \case
     Just x -> pure x
     Nothing -> q
 
