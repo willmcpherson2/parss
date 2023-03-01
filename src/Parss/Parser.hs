@@ -14,7 +14,9 @@ parse :: Parser m s a -> s -> a
 parse p s = let (_, _, x) = runParser p s in x
 
 instance Functor (Parser m s) where
-  fmap f (Parser p) = Parser $ fmap f . p
+  fmap f (Parser p) = Parser $ \s ->
+    let (m, s', x) = p s
+     in (m, s', f x)
 
 instance Monoid m => Applicative (Parser m s) where
   pure x = Parser (mempty,,x)
