@@ -39,6 +39,7 @@ library
   import: common
   hs-source-dirs: src
   exposed-modules:
+    Parss
     Parss.Parser
     Parss.Stream
     Parss.Combinators

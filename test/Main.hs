@@ -3,9 +3,7 @@ module Main (main) where
 import Data.Char (isSpace)
 import Data.List.NonEmpty (NonEmpty ((:|)), toList)
 import Harness (tests)
-import Parss.Combinators
-import Parss.Parser
-import Parss.Trans
+import Parss
 import System.Exit (exitFailure, exitSuccess)
 import Test.HUnit (Test, errors, failures, runTestTT)
 import Text.Read (readMaybe)

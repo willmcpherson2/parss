@@ -16,8 +16,7 @@ import Control.Monad.Trans.Maybe (MaybeT (..), runMaybeT)
 import Parss.Parser (Parser)
 
 -- $setup
--- >>> import Parss.Combinators
--- >>> import Parss.Parser
+-- >>> import Parss
 
 -- | Parser that always returns a value, but with the power to return
 -- early with @Left e@.
