@@ -9,6 +9,8 @@ module Parss.Combinators
     try,
     into,
     satisfy,
+    neg,
+    end,
     is,
     cat,
     literal,
@@ -115,6 +117,36 @@ into f = (>>= f) <$> stream
 -- Just 'a'
 satisfy :: Stream m s (Maybe a) => (a -> Bool) -> Parser m s (Maybe a)
 satisfy f = into $ \x -> if f x then Just x else Nothing
+
+-- | Negate a parser. Maps the result to @Nothing@ if it succeeds and
+-- @Just m@ if it fails.
+-- Keep in mind that the resulting parser might match the end of the
+-- stream.
+--
+-- >>> parse (neg $ literal "x") "xxx"
+-- Nothing
+--
+-- >>> parse (neg $ literal "x") "abc"
+-- Just "a"
+--
+-- >>> parse (star $ neg $ try (literal "x") `or` end) "abc"
+-- ["a","b","c"]
+neg :: Parser m s (Maybe a) -> Parser m s (Maybe m)
+neg p = Parser $ \s ->
+  let (m, s', x) = runParser p s
+   in case x of
+        Just _ -> (m, s', Nothing)
+        Nothing -> (m, s', Just m)
+
+-- | End of stream. Like regular expression @$@.
+--
+-- >>> parse end "abc"
+-- Nothing
+--
+-- >>> parse end ""
+-- Just ""
+end :: Stream m s (Maybe a) => Parser m s (Maybe m)
+end = neg stream
 
 -- | Like regular expression @a@.
 --
