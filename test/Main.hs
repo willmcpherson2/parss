@@ -7,7 +7,6 @@ import Parss
 import System.Exit (exitFailure, exitSuccess)
 import Test.HUnit (Test, errors, failures, runTestTT)
 import Text.Read (readMaybe)
-import Prelude hiding (or)
 
 main :: IO ()
 main = do
@@ -95,26 +94,26 @@ data Tree
   deriving (Eq, Show)
 
 parseTree :: Parser Match Source Tree
-parseTree = try parseSubTree `orElse` locate (pure $ TreeErr ExpectedTree)
+parseTree = try parseSubTree |> locate (pure $ TreeErr ExpectedTree)
 
 parseSubTree :: Parser Match Source (Maybe Tree)
 parseSubTree = do
   skipSpace
-  try parseParens `or` parseWord
+  try parseParens <|> parseWord
 
 parseParens :: Parser Match Source (Maybe Tree)
 parseParens = locateM . fallible $ do
   need $ try $ is '('
-  trees <- ok $ star parseSubTree
+  trees <- ok $ many parseSubTree
   ok skipSpace
   fallback (TreeErr ParenNotClosed) $ try $ is ')'
   pure $ Parens trees
 
 parseWord :: Parser Match Source (Maybe Tree)
 parseWord = locateM . fallible $ do
-  chars <- need . plus . try . satisfy $ \char ->
+  chars <- need . some . try . satisfy $ \char ->
     not (isSpace char) && char `notElem` "()"
   pure $ Word chars
 
 skipSpace :: Parser Match Source String
-skipSpace = star $ try $ satisfy isSpace
+skipSpace = many $ try $ satisfy isSpace

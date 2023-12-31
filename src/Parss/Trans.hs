@@ -36,7 +36,7 @@ fallible = fmap (fmap $ either id id) . runMaybeT . runExceptT
 
 -- | Value is @ok@. Lifts it. Works for 'Fallible' and 'Infallible'.
 --
--- >>> parse (fallible $ ok (star $ try $ is 'a') >> need (is 'b')) "aaab"
+-- >>> parse (fallible $ ok (many $ try $ is 'a') >> need (is 'b')) "aaab"
 -- Just 'b'
 ok ::
   (Monoid m, MonadTrans t, Monad (t (Parser m s))) =>
